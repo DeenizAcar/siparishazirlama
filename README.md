@@ -33,13 +33,19 @@ Açık siparişler cihazda saklanır; uygulama kapanıp açılınca kaldığı y
 
 Diğer programlarda yapılan değişiklikler sayfaya dönülünce kendiliğinden görünür (aynı tarayıcıda kullanılmalıdır).
 
-**Android uygulamasında** her uygulamanın verileri ayrı tutulduğu için listeler **Excel'den Aktar** ile alınır:
+**Android uygulaması** veriyi aynı telefondaki Cari Arama, Markalar ve Ürünler uygulamalarından canlı okur.
+Her birinde `VeriPaylasim` adlı bir paylaşım noktası vardır. Bu nokta yalnızca Sipariş Hazırlama'ya cevap verir:
+çağıranın paket adı ve imza parmak izi kontrol edilir. Okuma, `android/.../KaynakPlugin.java` ile yapılır ve
+uygulamaya her dönüldüğünde tekrarlanır.
 
-- Markalar programının Excel dışa aktarımı (`Markalar` sayfası)
-- Ürünler programının Excel dışa aktarımı (`Ürünler` sayfası)
-- Cari listesi: Cari Kodu, Cari İsmi, Adres, İlçe/Semt, İl, Telefon sütunları
+| Uygulama | Paylaşım adresi | Gereken sürüm |
+|---|---|---|
+| Cari Arama | `com.cariarama.app.paylasim` | 1.0.11+ (bir kez açılmalı) |
+| Markalar | `com.deenizacar.markalar.paylasim` | paylaşımlı ilk CI sürümü (bir kez açılmalı) |
+| Ürünler | `com.babamaku.urunler.paylasim` | 1.2.4+ |
 
-Aynı türden yeni dosya aktarılınca eski liste yenisiyle değiştirilir.
+Bir uygulama kurulu değilse ya da eski sürümse, o liste için yedek olarak **Excel'den Aktar** kullanılabilir:
+Markalar/Ürünler programlarının Excel dışa aktarımı veya cari listesi (Cari Kodu, Cari İsmi, Adres, İlçe/Semt, İl, Telefon).
 
 ## Geliştirme
 

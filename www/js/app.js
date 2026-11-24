@@ -94,9 +94,50 @@
   // ===================================================================
   let kaynak = { cariler: [], markalar: [], kategoriler: [], disari: { cari: false, marka: false, urun: false } };
 
+  // Android: veriler Cari Arama, Markalar ve Ürünler uygulamalarından (VeriPaylasim sağlayıcıları) okunur.
+  // Web'de aynı adresteki (deenizacar.github.io) localStorage kayıtları doğrudan okunur.
+  const UYGULAMA = {
+    cari: { yetki: 'com.cariarama.app.paylasim', ad: 'Cari Arama' },
+    marka: { yetki: 'com.deenizacar.markalar.paylasim', ad: 'Markalar' },
+    urun: { yetki: 'com.babamaku.urunler.paylasim', ad: 'Ürünler' }
+  };
+  const paylasilan = { cari: null, marka: null, urun: null };
+  const paylasimDurum = { cari: '', marka: '', urun: '' };
+  async function paylasimOku() {
+    const K = NATIVE && window.Capacitor.Plugins && window.Capacitor.Plugins.Kaynak;
+    if (!K) return;
+    await Promise.all(Object.keys(UYGULAMA).map(async t => {
+      try {
+        const r = await K.oku({ yetki: UYGULAMA[t].yetki });
+        paylasimDurum[t] = r.durum;
+        paylasilan[t] = r.veri ? JSON.parse(r.veri) : null;
+      } catch (e) {
+        paylasimDurum[t] = 'yok';
+        paylasilan[t] = null;
+      }
+    }));
+  }
+  function yenile() {
+    return paylasimOku().then(() => {
+      kaynakYukle();
+      siparisCiz();
+      if ($('#dlgCari').open) aramaCiz();
+    });
+  }
+  // Veri bulunamayınca gösterilecek açıklama
+  function kaynakNotu(t) {
+    const ad = UYGULAMA[t].ad;
+    if (!NATIVE) return ad + ' programında kayıt yok (aynı tarayıcıda kullanılmalı) ya da Excel dosyasından aktarın.';
+    if (paylasimDurum[t] === 'yok') return ad + ' uygulaması bu telefonda kurulu değil ya da güncel değil. Güncel sürümü kurun.';
+    if (paylasimDurum[t] === 'izin') return ad + ' uygulaması verilerini paylaşmadı.';
+    return ad + ' uygulamasında kayıt yok. Varsa ' + ad + ' uygulamasını bir kez açıp kapatın.';
+  }
+
   function kaynakYukle() {
     const aktarilan = oku(KEY_AKTARILAN) || {};
-    const c = oku(KEY_CARI), m = oku(KEY_MARKA), u = oku(KEY_URUN);
+    const c = NATIVE ? paylasilan.cari : oku(KEY_CARI);
+    const m = NATIVE ? paylasilan.marka : oku(KEY_MARKA);
+    const u = NATIVE ? paylasilan.urun : oku(KEY_URUN);
     const cariVar = !!(c && Array.isArray(c.cariler));
     const markaVar = Array.isArray(m);
     const urunVar = !!(u && Array.isArray(u.kategoriler));
@@ -118,7 +159,7 @@
 
     kaynak = { cariler, markalar, kategoriler, disari: { cari: cariVar, marka: markaVar, urun: urunVar } };
     aramaOnbellek = new WeakMap();
-    $('#aktarBtn').hidden = !(NATIVE || !cariVar || !markaVar || !urunVar);
+    $('#aktarBtn').hidden = cariVar && markaVar && urunVar;
   }
 
   // ===================================================================
@@ -217,7 +258,7 @@
       $('#urunBody').innerHTML = '';
       bos.hidden = false;
       bos.innerHTML = !kaynak.kategoriler.length
-        ? 'Ürün bulunamadı.<br><small>Ürünler programında ürün tanımlayın' + (NATIVE ? ' ve Excel ile aktarın' : '') + '.</small>'
+        ? 'Ürün bulunamadı.<br><small>' + esc(kaynakNotu('urun')) + '</small>'
         : 'Bu sekmede ürün yok.';
       return;
     }
@@ -421,9 +462,7 @@
       body.innerHTML = '';
       bos.hidden = false;
       bos.innerHTML = toplam ? 'Aramaya uyan cari bulunamadı.'
-        : 'Cari bulunamadı.<br><small>' + (NATIVE
-          ? 'Carileri Excel dosyasından aktarın (üstteki “Excel\'den Aktar”).'
-          : 'Cari Arama programında cari tanımlayın ya da Excel dosyasından aktarın.') + '</small>';
+        : 'Cari bulunamadı.<br><small>' + esc(kaynakNotu('cari')) + '</small>';
       return;
     }
     bos.hidden = true;
@@ -439,6 +478,7 @@
 
   function cariPenceresiAc() {
     kaynakYukle();
+    if (NATIVE) yenile();
     const s = aktif();
     arama.seciliId = s && s.cari ? s.cari.id : null;
     sonAnahtar = kelimeler().join('\u0001');
@@ -811,7 +851,7 @@
       if ([KEY_CARI, KEY_MARKA, KEY_URUN, KEY_AKTARILAN].includes(e.key)) { kaynakYukle(); siparisCiz(); }
     });
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') { tarihYaz(); kaynakYukle(); if (!acikPencereler.length) siparisCiz(); }
+      if (document.visibilityState === 'visible') { tarihYaz(); yenile(); }
     });
 
     // Android geri tuşu
@@ -842,6 +882,7 @@
     kaynakYukle();
     olaylariBagla();
     hepsiniCiz();
+    if (NATIVE) yenile();
   }
   baslat();
 })();
