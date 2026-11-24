@@ -1,0 +1,49 @@
+# main dalına her gönderimde web sitesini ve APK'yı GitHub Pages'te yayınlar.
+#   Web:  https://deenizacar.github.io/siparishazirlama/
+#   APK:  https://deenizacar.github.io/siparishazirlama/apk/
+# APK bu bilgisayarda `npm run apk` ile derlenip imzalanır ve site/apk/ içine konur
+# (imza anahtarı GitHub'a gönderilmez).
+name: Web ve APK yayınla
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  hazirla:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Site klasörünü hazırla
+        run: |
+          mkdir -p _site/apk
+          cp -r www/. _site/
+          cp -r site/apk/. _site/apk/
+          touch _site/.nojekyll
+          test -f _site/apk/siparis-hazirlama.apk
+          ls -la _site _site/apk
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  yayinla:
+    needs: hazirla
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

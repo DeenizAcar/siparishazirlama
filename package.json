@@ -1,0 +1,21 @@
+{
+  "name": "siparishazirlama",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sipariş Hazırlama - cari, marka ve ürün seçerek sipariş sepeti oluşturma",
+  "scripts": {
+    "icons": "node tools/build-icons.mjs",
+    "sync": "npx cap sync android",
+    "apk": "node tools/apk-derle.mjs",
+    "web": "node tools/serve.mjs www 5190"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.2",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "8.6.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.2",
+    "sharp": "0.35.5"
+  }
+}

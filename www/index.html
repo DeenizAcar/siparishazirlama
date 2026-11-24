@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#1f4e79">
+  <meta name="description" content="Sipariş hazırlama: cari, marka ve ürün seçerek sipariş sepeti oluşturma">
+  <title>Sipariş Hazırlama</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" href="img/icon-192.png">
+  <link rel="apple-touch-icon" href="img/icon-192.png">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <!-- Üst panel: tarih -->
+  <header class="topbar">
+    <div class="tarih"><span class="etiket">Tarih:</span> <b id="tarih"></b></div>
+    <div class="spacer"></div>
+    <button type="button" class="btn excel" id="aktarBtn" hidden>
+      <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M8 7l8 10M16 7 8 17" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/></svg>
+      Excel'den Aktar
+    </button>
+    <input type="file" id="aktarDosya" accept=".xlsx,.xls,.xlsm,.ods,.csv" hidden>
+    <a id="apkLink" class="apk-link" href="apk/" hidden><span class="uzun">Android uygulaması</span><span class="kisa">APK</span></a>
+  </header>
+
+  <!-- Sipariş sekmeleri: + her zaman en başta -->
+  <nav class="sekmeler" id="sekmeler" role="tablist" aria-label="Siparişler"></nav>
+
+  <main class="icerik" id="icerik">
+    <div class="bos-ekran" id="bosEkran">
+      Yeni sipariş açmak için yukarıdaki <b>+</b> sekmesine dokunun.
+    </div>
+
+    <section class="siparis" id="siparis" hidden>
+      <!-- Üst panel: cari, şoför, plaka -->
+      <div class="ust-panel">
+        <div class="satir cari-satir">
+          <span class="lbl">Cari :</span>
+          <div class="cari-kutu" id="cariKutu"></div>
+          <button type="button" class="btn primary sec-btn" id="cariSecBtn">Seç</button>
+        </div>
+        <div class="satir">
+          <label class="alan"><span class="lbl">Şoför :</span><input id="sofor" type="text" maxlength="60" autocomplete="off" placeholder="Şoför adı"></label>
+          <label class="alan plaka"><span class="lbl">Plaka :</span><input id="plaka" type="text" maxlength="12" autocomplete="off" autocapitalize="characters" placeholder="Plaka"></label>
+        </div>
+      </div>
+
+      <!-- Alt panel: markalar | ürünler | sepet -->
+      <div class="alt-panel">
+        <div class="kutu kutu-marka">
+          <div class="table-wrap">
+            <table class="grid selectable" id="markaTable">
+              <thead><tr><th class="radio-th"></th><th>Marka</th></tr></thead>
+              <tbody id="markaBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="kutu kutu-urun">
+          <div class="kat-sekmeler" id="katSekmeler" role="tablist" aria-label="Ürün sekmeleri"></div>
+          <div class="table-wrap" id="urunWrap">
+            <table class="grid selectable" id="urunTable">
+              <thead><tr><th>Ürünler</th></tr></thead>
+              <tbody id="urunBody"></tbody>
+            </table>
+            <div class="empty" id="urunBos" hidden></div>
+          </div>
+        </div>
+
+        <div class="kutu kutu-sepet">
+          <div class="table-wrap" id="sepetWrap">
+            <table class="grid selectable" id="sepetTable">
+              <thead><tr><th>Sepet</th><th class="num">Adet</th><th class="act" aria-label="Sil"></th></tr></thead>
+              <tbody id="sepetBody"></tbody>
+            </table>
+            <div class="empty" id="sepetBos">Sepete atmak için ürüne çift dokunun.</div>
+          </div>
+          <div class="liste-bilgi" id="sepetBilgi"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Cari seçme penceresi (Cari Arama ön ekranının aynısı) -->
+  <dialog id="dlgCari" class="dlg-tam" aria-label="Cari Seç">
+    <div class="cari-ekran">
+      <div class="ust">
+        <header class="topbar">
+          <span class="dlg-baslik">Cari Seç</span>
+          <div class="spacer"></div>
+          <label class="sadece-tarif">
+            <input type="checkbox" id="sadeceTarif">
+            <span>Sadece tarif isimlerinde ara</span>
+          </label>
+          <span id="sayac" class="sayac" aria-live="polite"></span>
+          <button type="button" class="btn kapat-btn" id="cariKapat">Kapat</button>
+        </header>
+        <section class="searchbar">
+          <div class="search-box" id="searchBox">
+            <svg class="search-ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15.5 15.5 21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+            <div class="chips" id="chips"></div>
+            <input id="searchInput" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"
+                   enterkeyhint="search" placeholder="Ara… (birden fazla kelime yazabilirsiniz)" aria-label="Arama">
+          </div>
+          <button type="button" class="clear-all" id="clearAll" title="Aramayı tamamen temizle" aria-label="Aramayı tamamen temizle">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 5l14 14M19 5 5 19" stroke="#000" stroke-width="2.6" stroke-linecap="round"/></svg>
+          </button>
+        </section>
+      </div>
+      <div class="table-wrap" id="aramaWrap">
+        <table class="grid selectable" id="aramaTable">
+          <colgroup></colgroup>
+          <thead></thead>
+          <tbody id="aramaBody"></tbody>
+        </table>
+        <div class="empty" id="aramaBos" hidden></div>
+      </div>
+      <div class="liste-bilgi" id="aramaBilgi" aria-live="polite"></div>
+    </div>
+  </dialog>
+
+  <!-- Adet penceresi -->
+  <dialog id="dlgAdet" class="dlg-sm dlg-adet" aria-labelledby="adetBaslik">
+    <form class="dlg" id="adetForm" novalidate>
+      <div class="dlg-head" id="adetBaslik">Adet</div>
+      <div class="dlg-body">
+        <div class="adet-urun" id="adetUrun"></div>
+        <input id="adetInput" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" enterkeyhint="done" aria-label="Adet">
+        <div class="err" id="adetHata" role="alert"></div>
+      </div>
+      <div class="dlg-foot">
+        <button type="button" class="btn" id="adetIptal">İptal</button>
+        <button type="submit" class="btn primary">Tamam</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Bilgi / onay penceresi -->
+  <dialog id="dlgOnay" class="dlg-sm" aria-labelledby="onayBaslik">
+    <form method="dialog" class="dlg">
+      <div class="dlg-head" id="onayBaslik">Uyarı</div>
+      <div class="dlg-body" id="onayMesaj"></div>
+      <div class="dlg-foot">
+        <button type="button" class="btn" id="onayHayir">Vazgeç</button>
+        <button type="button" class="btn primary" id="onayEvet">Tamam</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" popover="manual" role="status" aria-live="polite"></div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

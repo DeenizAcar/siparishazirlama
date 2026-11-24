@@ -1,0 +1,6 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "web", "runtimeExecutable": "node", "runtimeArgs": ["tools/serve.mjs", "www", "5190"], "port": 5190 }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "appId": "com.deenizacar.siparishazirlama",
+  "appName": "Sipariş Hazırlama",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#eef2f6"
+  },
+  "plugins": {
+    "SystemBars": {
+      "style": "DARK",
+      "insetsHandling": "css",
+      "initialViewportFitValueHint": "cover",
+      "hidden": true
+    }
+  }
+}
